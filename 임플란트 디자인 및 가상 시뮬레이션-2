@@ -1,0 +1,82 @@
+import numpy as np
+import trimesh
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def load_tooth_model():
+    # 어금니 모델을 로드하는 함수 (예시)
+    tooth_model = np.array([
+        [0.0, 0.0, 0.0],  # 어금니의 꼭지점 좌표
+        [0.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0]
+    ])
+    return tooth_model
+
+def load_implant_model():
+    # 임플란트 메쉬 모델을 로드하는 함수 (예시)
+    implant_mesh = trimesh.load_mesh('implant.stl')
+    return implant_mesh
+
+def simulate_implant_placement(tooth_model, implant_model):
+    # 임플란트 삽입 시뮬레이션을 수행하는 함수 (예시)
+    center = np.mean(tooth_model, axis=0)  # 어금니 중앙 좌표 계산
+    result_model = implant_model.copy()
+    result_model.apply_translation(center)  # 임플란트를 어금니 중앙에 삽입
+    return result_model
+
+def visualize_simulation(tooth_model, implant_model, result_model):
+    # 시뮬레이션 결과 시각화 함수
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # 어금니 모델 시각화
+    ax.scatter(tooth_model[:, 0], tooth_model[:, 1], tooth_model[:, 2], color='gray')
+
+    # 임플란트 메쉬 모델 시각화
+    implant_vertices = implant_model.vertices * (1/4)  # 크기 조정
+    implant_vertices[:, 1] -= 3  # y축 이동
+    implant_faces = implant_model.faces
+    ax.plot_trisurf(
+        implant_vertices[:, 0], implant_vertices[:, 1], implant_vertices[:, 2],
+        triangles=implant_faces, color='red', alpha=0.5, edgecolor='black'
+    )
+
+    # 시뮬레이션 결과 시각화
+    result_vertices = result_model.vertices * (1/4)  # 크기 조정
+    result_vertices[:, 1] -= 3  # y축 이동
+    result_faces = result_model.faces
+    ax.plot_trisurf(
+        result_vertices[:, 0], result_vertices[:, 1], result_vertices[:, 2],
+        triangles=result_faces, color='blue', alpha=0.5, edgecolor='black'
+    )
+
+    # 어금니와 임플란트 좌표를 기반으로 축 범위 설정
+    all_vertices = np.concatenate((tooth_model, implant_vertices, result_vertices))
+    min_coord = np.min(all_vertices, axis=0)
+    max_coord = np.max(all_vertices, axis=0)
+    ax.set_xlim3d([min_coord[0], max_coord[0]])
+    ax.set_ylim3d([min_coord[1], max_coord[1]])
+    ax.set_zlim3d([min_coord[2], max_coord[2]])
+
+    # 그래프 출력
+    plt.show()
+
+
+
+
+# 어금니 모델 로드
+tooth_model = load_tooth_model()
+
+# 임플란트 모델 로드
+implant_model = load_implant_model()
+
+# 임플란트 삽입 시뮬레이션 수행
+result_model = simulate_implant_placement(tooth_model, implant_model)
+
+# 시뮬레이션 결과 시각화
+visualize_simulation(tooth_model, implant_model, result_model)
